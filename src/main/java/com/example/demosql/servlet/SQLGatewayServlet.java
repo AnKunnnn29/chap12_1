@@ -14,10 +14,9 @@ import java.sql.*;
 @WebServlet("/SQLGatewayServlet")
 public class SQLGatewayServlet extends HttpServlet {
 
-    // 🔹 Đọc thông tin kết nối từ Environment Variables trên Render
-    private static final String DB_URL  = System.getenv("DB_URL");
-    private static final String DB_USER = System.getenv("DB_USER");
-    private static final String DB_PASS = System.getenv("DB_PASS");
+    private static final String DB_URL  = "jdbc:mysql://mysql-15cb0e9b-tnumber696-ebdf.e.aivencloud.com:16607/defaultdb?useSSL=true&requireSSL=true&serverTimezone=UTC";
+    private static final String DB_USER = "avnadmin";
+    private static final String DB_PASS = "AVNS_Fwodpkd9L5BNvjfqHMH";
 
     @Override
     protected void doPost(HttpServletRequest request,
@@ -28,55 +27,37 @@ public class SQLGatewayServlet extends HttpServlet {
         String sqlResult = "";
 
         try {
-            // ✅ Tải driver MySQL
+            // Load MySQL driver
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            // ✅ Kết nối tới MySQL Cloud (Render Database hoặc Aiven)
+            // Connect to Aiven MySQL
             Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 
             sqlStatement = sqlStatement.trim();
-            if (sqlStatement.length() >= 6) {
-                String sqlType = sqlStatement.substring(0, 6);
-
-                // ✅ SELECT → hiển thị bảng kết quả
-                if (sqlType.equalsIgnoreCase("select")) {
-                    PreparedStatement ps = connection.prepareStatement(sqlStatement);
-                    ResultSet resultSet = ps.executeQuery();
-                    sqlResult = SQLUtil.getHtmlTable(resultSet);
-                    resultSet.close();
-                    ps.close();
-                } else {
-                    // ✅ INSERT / UPDATE / DELETE / CREATE / DROP
-                    PreparedStatement ps = connection.prepareStatement(sqlStatement);
-                    int rows = ps.executeUpdate();
-                    sqlResult = "<p>Statement executed successfully.<br>" 
-                              + rows + " row(s) affected.</p>";
-                    ps.close();
-                }
+            if (sqlStatement.toLowerCase().startsWith("select")) {
+                PreparedStatement ps = connection.prepareStatement(sqlStatement);
+                ResultSet rs = ps.executeQuery();
+                sqlResult = SQLUtil.getHtmlTable(rs);
+                rs.close();
+                ps.close();
+            } else {
+                PreparedStatement ps = connection.prepareStatement(sqlStatement);
+                int rows = ps.executeUpdate();
+                sqlResult = "<p>Statement executed successfully.<br>" + rows + " row(s) affected.</p>";
+                ps.close();
             }
-
             connection.close();
 
         } catch (ClassNotFoundException e) {
-            sqlResult = "<p>Error loading the database driver:<br>" + e.getMessage() + "</p>";
-            e.printStackTrace();
-
+            sqlResult = "<p>Error loading MySQL driver:<br>" + e.getMessage() + "</p>";
         } catch (SQLException e) {
-            sqlResult = "<p>Error executing the SQL statement:<br>" + e.getMessage() + "</p>";
-            e.printStackTrace();
-
-            // ✅ In log ra để kiểm tra trong Render Logs
-            System.err.println("❌ SQL Error: " + e.getMessage());
-            System.err.println("🔗 DB_URL: " + DB_URL);
-            System.err.println("👤 DB_USER: " + DB_USER);
+            sqlResult = "<p>Error executing SQL statement:<br>" + e.getMessage() + "</p>";
         }
 
-        // ✅ Gửi kết quả về JSP
         HttpSession session = request.getSession();
         session.setAttribute("sqlResult", sqlResult);
         session.setAttribute("sqlStatement", sqlStatement);
 
-        String url = "/index.jsp";
-        getServletContext().getRequestDispatcher(url).forward(request, response);
+        getServletContext().getRequestDispatcher("/index.jsp").forward(request, response);
     }
 }

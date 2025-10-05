@@ -1,2 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Context path=""/>
+<Context path="/demoSQL">
+    
+    <Resource name="jdbc/demoSQL"
+              auth="Container"
+              type="javax.sql.DataSource"
+              driverClassName="com.mysql.cj.jdbc.Driver"
+              
+              url="jdbc:mysql://mysql-15cb0e9b-tnumber696-ebdf.e.aivencloud.com:16607/defaultdb?useSSL=true&amp;requireSSL=true&amp;serverTimezone=UTC"
+              username="avnadmin"
+              password="AVNS_Fwodpkd9L5BNvjfqHMH"
+              
+              maxTotal="100"
+              maxIdle="30"
+              maxWaitMillis="10000"
+              removeAbandonedOnBorrow="true"
+              removeAbandonedTimeout="60"
+              logAbandoned="true" />
+</Context>
